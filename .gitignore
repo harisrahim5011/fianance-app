@@ -70,6 +70,10 @@ node_modules/
 .dataconnect
 
 #secret files for config
-config.txt 
+config.txt
+config
+
+#public folder containing html file
+public__00/
 
 
