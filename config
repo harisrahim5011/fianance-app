@@ -1,0 +1,9 @@
+   // --- Firebase Configuration ---
+        // IMPORTANT: Replace with your actual Firebase config if not using the Canvas environment
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyB5r_U4Mya_lulMZX4Rv7PxU60yDlIhqNk", // Replace if not in Canvas
+            authDomain: "finanace-app-57809.firebaseapp.com", // Replace if not in Canvas
+            projectId: "finanace-app-57809", // Replace if not in Canvas
+            storageBucket: "finanace-app-57809.firebasestorage.app", // Replace if not in Canvas
+            messagingSenderId: "1026383055065", // Replace if not in Canvas
+            appId: "1:1026383055065:web:264119a9e273ad233956c8" // Replace if not in Canvas
