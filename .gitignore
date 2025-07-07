@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
+storage.rules
 
 # Firebase cache
 .firebase/
@@ -69,4 +70,6 @@ node_modules/
 .dataconnect
 
 #secret files for config
-config.txt
+config.txt 
+
+
