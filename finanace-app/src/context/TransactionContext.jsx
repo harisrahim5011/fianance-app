@@ -32,11 +32,11 @@ export function useTransactions() {
  *
  * This component acts as a provider for the TransactionContext. It manages:
  * - The list of financial transactions.
- * - The currently displayed month and year for filtering transactions.
+ * - The currently displayed month, year, and now day for filtering transactions.
  * - The loading state for transaction operations.
  * - Predefined categories for income and expenses.
  * - Functions to add, delete, and fetch transactions from Firestore.
- * - A function to change the current month/year view.
+ * - Functions to change the current month/year view and the current day view.
  *
  * @param {object} props - The component's props.
  * @param {React.ReactNode} props.children - The child components that will consume the TransactionContext.
@@ -48,6 +48,9 @@ export function TransactionProvider({ children }) {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   // currentYear: State to store the currently displayed year.
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  // currentDay: State to store the currently displayed day of the month (1-31).
+  // Initialize with the current day.
+  const [currentDay, setCurrentDay] = useState(new Date().getDate());
   // loading: State to indicate if transaction data is being fetched or modified.
   const [loading, setLoading] = useState(false);
   // currentUser: Get the authenticated user from the AuthContext.
@@ -133,7 +136,7 @@ export function TransactionProvider({ children }) {
       console.warn("Cannot add transaction: No user authenticated.");
       return false;
     }
-    
+
     setLoading(true); // Set loading to true during the add operation
     try {
       // Add a new document to the user's private transactions subcollection.
@@ -165,7 +168,7 @@ export function TransactionProvider({ children }) {
       console.warn("Cannot delete transaction: No user authenticated.");
       return false;
     }
-    
+
     setLoading(true); // Set loading to true during the delete operation
     try {
       // Delete the document from the user's private transactions subcollection.
@@ -183,13 +186,14 @@ export function TransactionProvider({ children }) {
    * changeMonth Function
    *
    * Updates the currentMonth and currentYear states to navigate between months.
+   * When changing months, the day is reset to 1 to avoid issues with month-end dates (e.g., going from March 31 to Feb).
    * @param {number} delta - The change in months (e.g., -1 for previous month, 1 for next month).
    */
   const changeMonth = (delta) => {
     setCurrentMonth(prev => {
       let newMonth = prev + delta;
       let newYear = currentYear; // Initialize newYear with the current year
-      
+
       // Adjust year if month goes out of bounds (0-11).
       if (newMonth < 0) {
         newMonth = 11; // Wrap around to December
@@ -198,10 +202,30 @@ export function TransactionProvider({ children }) {
         newMonth = 0; // Wrap around to January
         newYear++; // Increment year
       }
-      
+
       setCurrentYear(newYear); // Update the year state
+      setCurrentDay(1); // Reset day to 1 when month changes to avoid date overflow issues
       return newMonth; // Return the new month index
     });
+  };
+
+  /**
+   * changeDay Function
+   *
+   * Updates the currentDay, currentMonth, and currentYear states to navigate between days.
+   * It handles day, month, and year rollovers correctly.
+   * @param {number} delta - The change in days (e.g., -1 for previous day, 1 for next day).
+   */
+  const changeDay = (delta) => {
+    // Create a Date object for the current selected date
+    const currentDate = new Date(currentYear, currentMonth, currentDay);
+    // Add the delta to the current date's day
+    currentDate.setDate(currentDate.getDate() + delta);
+
+    // Update the state based on the new date
+    setCurrentYear(currentDate.getFullYear());
+    setCurrentMonth(currentDate.getMonth());
+    setCurrentDay(currentDate.getDate());
   };
 
   // The value object containing all state and functions to be provided by the context.
@@ -209,11 +233,13 @@ export function TransactionProvider({ children }) {
     transactions,
     currentMonth,
     currentYear,
+    currentDay, // Include currentDay in the context value
     incomeCategories,
     expenseCategories,
     addTransaction,
     deleteTransaction,
     changeMonth,
+    changeDay, // Include changeDay in the context value
     loading // Provide the loading state
   };
 

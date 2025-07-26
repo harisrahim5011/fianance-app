@@ -5,7 +5,7 @@ import { useTransactions } from '../context/TransactionContext'; // Custom hook 
  * TransactionsSection Component
  *
  * This component displays a list of financial transactions filtered for the currently
- * selected month and year. It allows users to view and delete individual transactions.
+ * selected day, month, and year. It allows users to view and delete individual transactions.
  *
  * @param {object} props - The component's props.
  * @param {function} props.showConfirm - A function to display a confirmation modal before deletion.
@@ -16,18 +16,20 @@ const TransactionsSection = ({ showConfirm, showMessage }) => {
   // transactions: An array of all financial transactions.
   // currentMonth: The index of the currently selected month (0-11).
   // currentYear: The currently selected year.
+  // currentDay: The currently selected day (1-31).
   // deleteTransaction: An asynchronous function to delete a transaction from Firestore.
-  const { transactions, currentMonth, currentYear, deleteTransaction } = useTransactions();
-  
+  const { transactions, currentMonth, currentYear, currentDay, deleteTransaction } = useTransactions();
+
   // --- Transaction Filtering Logic ---
-  // Determine the start and end dates for the current month to filter transactions.
-  const monthStart = new Date(currentYear, currentMonth, 1); // First day of the current month
-  const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59); // Last millisecond of the last day of the current month
-  
-  // Filter the full list of transactions to include only those within the current month.
+  // Determine the start and end dates for the current day to filter transactions.
+  // This will filter transactions to include only those within the specific 24-hour period of the currentDay.
+  const dayStart = new Date(currentYear, currentMonth, currentDay, 0, 0, 0); // First millisecond of the current day
+  const dayEnd = new Date(currentYear, currentMonth, currentDay, 23, 59, 59, 999); // Last millisecond of the last day of the current day
+
+  // Filter the full list of transactions to include only those within the current day.
   const filteredTransactions = transactions.filter(t => {
     const transactionDate = t.date.toDate(); // Convert Firestore Timestamp to JavaScript Date object
-    return transactionDate >= monthStart && transactionDate <= monthEnd; // Check if transaction date is within the current month
+    return transactionDate >= dayStart && transactionDate <= dayEnd; // Check if transaction date is within the current day
   });
 
   /**
@@ -55,23 +57,23 @@ const TransactionsSection = ({ showConfirm, showMessage }) => {
 
   // --- Component JSX Structure ---
   return (
-    // Section container for the monthly transactions list.
+    // Section container for the daily transactions list.
     <section>
-      {/* Heading for the monthly transactions section. */}
-      <h3 className="text-lg font-semibold text-gray-700 mb-3">Monthly Transactions</h3>
+      {/* Heading for the daily transactions section. */}
+      <h3 className="text-lg font-semibold text-gray-700 mb-3">Daily Transactions</h3>
       {/* Container for the list of transactions, with vertical spacing, max height, and scrollability. */}
       <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
-        {/* Conditional rendering: If no transactions for the current month, display a message. */}
+        {/* Conditional rendering: If no transactions for the current day, display a message. */}
         {filteredTransactions.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">No transactions for this month.</p>
+          <p className="text-gray-500 text-center py-4">No transactions for this day.</p>
         ) : (
           // If there are transactions, map over them to render each one.
           filteredTransactions.map(t => (
-            <div 
+            <div
               key={t.id} // Unique key for each transaction item
               // Dynamic styling based on transaction type (income/expense).
               className={`p-3 mb-2 rounded-lg shadow flex justify-between items-center ${
-                t.type === 'income' 
+                t.type === 'income'
                   ? 'bg-green-100 border-l-4 border-green-500' // Green styling for income
                   : 'bg-red-100 border-l-4 border-red-500' // Red styling for expense
               }`}
@@ -85,7 +87,7 @@ const TransactionsSection = ({ showConfirm, showMessage }) => {
                 </p>
               </div>
               {/* Delete button for the transaction. */}
-              <button 
+              <button
                 onClick={() => handleDelete(t.id)} // Calls handleDelete with the transaction ID
                 className="delete-btn text-red-500 hover:text-red-700 font-semibold p-1 rounded-full"
               >

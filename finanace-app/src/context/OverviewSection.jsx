@@ -4,39 +4,43 @@ import { useTransactions } from '../context/TransactionContext'; // Custom hook 
 /**
  * OverviewSection Component
  *
- * This component displays a financial overview for the currently selected month and year.
- * It shows the total income, total expenses, and the net balance for that period.
- * It also provides navigation buttons to change the displayed month.
+ * This component displays a financial overview for the currently selected month, year, and now day.
+ * It shows the total income, total expenses, and the net balance for that specific period.
+ * It also provides navigation buttons to change the displayed month and now day.
  */
 const OverviewSection = () => {
   // Destructure necessary state and functions from the useTransactions hook.
   // transactions: An array of all financial transactions.
   // currentMonth: The index of the currently selected month (0-11).
   // currentYear: The currently selected year.
+  // currentDay: The currently selected day of the month (1-31).
   // changeMonth: A function to change the current month (e.g., -1 for previous, 1 for next).
-  const { transactions, currentMonth, currentYear, changeMonth } = useTransactions();
-  
-  // Format the current month and year for display (e.g., "July 2025").
-  const monthYear = new Date(currentYear, currentMonth).toLocaleString('default', { 
+  // changeDay: A function to change the current day (e.g., -1 for previous, 1 for next).
+  const { transactions, currentMonth, currentYear, currentDay, changeMonth, changeDay } = useTransactions();
+
+  // Format the current date (day, month, and year) for display (e.g., "July 26, 2025").
+  const fullDate = new Date(currentYear, currentMonth, currentDay).toLocaleString('default', {
+    day: 'numeric', // Day of the month
     month: 'long', // Full month name
     year: 'numeric' // Full year
   });
-  
+
   // --- Transaction Filtering Logic ---
-  // Determine the start and end dates for the current month to filter transactions.
-  const monthStart = new Date(currentYear, currentMonth, 1); // First day of the current month
-  const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59); // Last millisecond of the last day of the current month
-  
-  // Filter the full list of transactions to include only those within the current month.
+  // Determine the start and end dates for the current day to filter transactions.
+  // The filter will now be for a specific day, from the beginning of that day to the end.
+  const dayStart = new Date(currentYear, currentMonth, currentDay, 0, 0, 0); // First millisecond of the current day
+  const dayEnd = new Date(currentYear, currentMonth, currentDay, 23, 59, 59, 999); // Last millisecond of the current day
+
+  // Filter the full list of transactions to include only those within the current day.
   const filteredTransactions = transactions.filter(t => {
     const transactionDate = t.date.toDate(); // Convert Firestore Timestamp to JavaScript Date object
-    return transactionDate >= monthStart && transactionDate <= monthEnd; // Check if transaction date is within the current month
+    return transactionDate >= dayStart && transactionDate <= dayEnd; // Check if transaction date is within the current day
   });
-  
+
   // --- Calculation of Totals ---
   let totalIncome = 0; // Initialize total income
   let totalExpenses = 0; // Initialize total expenses
-  
+
   // Iterate through the filtered transactions to calculate total income and expenses.
   filteredTransactions.forEach(t => {
     if (t.type === 'income') {
@@ -45,7 +49,7 @@ const OverviewSection = () => {
       totalExpenses += t.amount; // Add to expenses if transaction type is 'expense'
     }
   });
-  
+
   // Calculate the net balance.
   const balance = totalIncome - totalExpenses;
 
@@ -53,31 +57,32 @@ const OverviewSection = () => {
   return (
     // Section container for the financial overview.
     <section className="mb-6">
-      {/* Month navigation and display. */}
+      {/* Date navigation and display. */}
       <div className="flex justify-between items-center mb-4">
-        {/* Button to navigate to the previous month. */}
-        <button 
-          onClick={() => changeMonth(-1)} // Calls changeMonth with -1 to go back one month
+        {/* Button to navigate to the previous day. */}
+        <button
+          onClick={() => changeDay(-1)} // Calls changeDay with -1 to go back one day
           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
         >
-          {/* SVG icon for previous month arrow. */}
+          {/* SVG icon for previous arrow. */}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6 text-gray-600">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
         </button>
-        {/* Display of the current month and year. */}
-        <h2 className="text-xl font-semibold text-gray-700">{monthYear}</h2>
-        {/* Button to navigate to the next month. */}
-        <button 
-          onClick={() => changeMonth(1)} // Calls changeMonth with 1 to go forward one month
+        {/* Display of the current full date. */}
+        <h2 className="text-xl font-semibold text-gray-700">{fullDate}</h2>
+        {/* Button to navigate to the next day. */}
+        <button
+          onClick={() => changeDay(1)} // Calls changeDay with 1 to go forward one day
           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
         >
-          {/* SVG icon for next month arrow. */}
+          {/* SVG icon for next arrow. */}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6 text-gray-600">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
         </button>
       </div>
+
       {/* Grid layout for displaying total income, expenses, and balance. */}
       <div className="grid grid-cols-3 gap-4 mb-4 text-center">
         {/* Total Income display card. */}
