@@ -6,28 +6,59 @@ import LoadingIndicator from './LoadingIndicator'; // Component to display a loa
  * AuthContainer Component
  *
  * This component is responsible for rendering the authentication interface of the Finance Tracker application.
- * It allows users to sign in with their Google account and displays a loading indicator during the authentication process.
+ * It primarily handles the display of a loading indicator during the initial authentication check
+ * (including automatic anonymous sign-in). If no user is authenticated after this check, it provides
+ * a button to sign in with Google.
  */
 const AuthContainer = () => {
   // Destructure authentication-related state and functions from the useAuth hook.
+  // currentUser: The currently authenticated user object (null if not authenticated).
   // signInWithGoogle: Function to initiate the Google sign-in process.
   // loading: A boolean indicating if an authentication operation is in progress.
-  const { signInWithGoogle, loading } = useAuth();
+  const { currentUser, signInWithGoogle, loading, error } = useAuth(); // Also get error for feedback
 
-  // --- Conditional Rendering for Loading State ---
-  // If an authentication operation is in progress, display a loading indicator.
-  if (loading) return <LoadingIndicator />;
+  // --- Conditional Rendering Logic ---
 
-  // --- Main Component Render ---
+  // 1. If authentication is still in progress (initial check or sign-in attempt), show loading.
+  if (loading) {
+    return <LoadingIndicator />;
+  }
+
+  // 2. If a user is already authenticated (either Google or anonymous),
+  //    this component should not render the sign-in options. The main app will take over.
+  //    This typically means the parent component of AuthContainer will conditionally
+  //    render AuthContainer OR the main app content based on currentUser.
+  //    However, if AuthContainer is ALWAYS rendered and it needs to decide what to show,
+  //    then if currentUser exists, it means the user is logged in.
+  if (currentUser) {
+    // In a typical setup, the parent App component would check currentUser and render
+    // either AuthContainer or the main application. If AuthContainer is always present,
+    // and a user is found (anonymous or otherwise), we can simply return null or a minimal
+    // message, assuming the main app content is already being rendered elsewhere
+    // based on `currentUser` being truthy.
+    return null; // User is authenticated, no need to show sign-in options.
+  }
+
+  // 3. If loading is false AND there's no currentUser, it means:
+  //    - The initial anonymous sign-in attempt failed.
+  //    - The user explicitly signed out from a Google/anonymous session.
+  //    In this case, we offer the Google sign-in option.
   return (
     // Main container for the authentication screen, styled for centering and appearance.
     <div className="text-center bg-white p-8 rounded-xl shadow-2xl max-w-md w-full">
       {/* Application title. */}
       <h1 className="text-3xl font-bold text-gray-800 mb-2">Finance Tracker</h1>
       {/* Introductory text for the sign-in prompt. */}
-      <p className="text-gray-600 mb-8">Sign in with your Google account to continue.</p>
+      <p className="text-gray-600 mb-8">
+        Welcome! You can sign in with your Google account to save your data across devices.
+      </p>
+
+      {error && ( // Display error message if anonymous sign-in failed
+        <p className="text-red-500 mb-4">{error}</p>
+      )}
+
       {/* Google Sign-In Button. */}
-      <button 
+      <button
         onClick={signInWithGoogle} // Attaches the signInWithGoogle function to the button's click event.
         className="bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-gray-100 flex items-center justify-center w-full max-w-xs mx-auto transition-transform transform hover:scale-105"
       >
