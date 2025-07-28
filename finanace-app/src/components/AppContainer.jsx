@@ -23,10 +23,10 @@ const AppContainer = () => {
   // currentUser: The currently authenticated user object (or null if not authenticated).
   // signOutUser: Function to sign out the current user.
   // signInWithGoogle: Function to initiate Google Sign-In, used for upgrading anonymous accounts.
-  const { currentUser, signOutUser, signInWithGoogle } = useAuth(); // SIGNIFICANT CHANGE: Added signInWithGoogle
+  const { currentUser, signOutUser, signInWithGoogle } = useAuth();
 
   // Destructure loading state from the useTransactions hook.
-  // loading: A boolean indicating if transaction data is currently being loaded.
+  // transactionsLoading: A boolean indicating if transaction data is currently being loaded.
   const { loading: transactionsLoading } = useTransactions(); // Renamed to avoid potential conflict with auth loading state
 
   // --- State Management for Modals ---
@@ -74,6 +74,10 @@ const AppContainer = () => {
     setShowConfirmModal(true); // Open the confirmation modal
   };
 
+  // If there's no current user at all (not even anonymous), return null.
+  // The root App component will then handle rendering the AuthContainer.
+  if (!currentUser) return null;
+
   // --- Main Component Render ---
   return (
     // Main container for the authenticated application content, with a max-width.
@@ -81,7 +85,7 @@ const AppContainer = () => {
       {/* Header section displaying user information and sign-out button. */}
       <header className="mb-6 text-center bg-white p-4 rounded-xl shadow-lg">
         {/* UserInfo component: displays current user details and handles sign-out and Google sign-in. */}
-        {/* SIGNIFICANT CHANGE: Passed signInWithGoogle to UserInfo */}
+        {/* Pass currentUser, signOutUser, and signInWithGoogle to UserInfo */}
         {currentUser && (
           <UserInfo
             user={currentUser}
@@ -113,10 +117,12 @@ const AppContainer = () => {
       </div>
 
       {/* AddTransactionModal: conditionally rendered based on showAddModal state. */}
+      {/* Pass isOpen, onClose, showMessage, and showConfirm to AddTransactionModal */}
       <AddTransactionModal
         isOpen={showAddModal} // Controls modal visibility
         onClose={() => setShowAddModal(false)} // Callback to close the modal
         showMessage={showMessage} // Passes the showMessage helper function
+        showConfirm={showConfirm} // Passes the showConfirm function for category deletion confirmation
       />
 
       {/* MessageModal: conditionally rendered based on showMessageModal state. */}
