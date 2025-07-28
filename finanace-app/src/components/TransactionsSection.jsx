@@ -6,6 +6,8 @@ import { useTransactions } from '../components/TransactionContext'; // Custom ho
  *
  * This component displays a list of financial transactions filtered for the currently
  * selected day, month, and year. It allows users to view and delete individual transactions.
+ * It also provides navigation buttons to move between days, integrating with the
+ * overall month/year selection from the TransactionContext.
  *
  * @param {object} props - The component's props.
  * @param {function} props.showConfirm - A function to display a confirmation modal before deletion.
@@ -18,18 +20,26 @@ const TransactionsSection = ({ showConfirm, showMessage }) => {
   // currentYear: The currently selected year.
   // currentDay: The currently selected day (1-31).
   // deleteTransaction: An asynchronous function to delete a transaction from Firestore.
-  const { transactions, currentMonth, currentYear, currentDay, deleteTransaction } = useTransactions();
+  // changeDay: A function to change the current day (e.g., -1 for previous, 1 for next).
+  const { transactions, currentMonth, currentYear, currentDay, deleteTransaction, changeDay } = useTransactions(); // SIGNIFICANT: 'changeDay' is now destructured
 
   // --- Transaction Filtering Logic ---
+  // Format the current date (day, month, and year) for display in the heading.
+  const fullDate = new Date(currentYear, currentMonth, currentDay).toLocaleString('default', {
+    day: 'numeric',   // Display the day of the month
+    month: 'long',    // Display the full month name (e.g., "July")
+    year: 'numeric'   // Display the full year (e.g., "2025")
+  });
+
   // Determine the start and end dates for the current day to filter transactions.
   // This will filter transactions to include only those within the specific 24-hour period of the currentDay.
-  const dayStart = new Date(currentYear, currentMonth, currentDay, 0, 0, 0); // First millisecond of the current day
-  const dayEnd = new Date(currentYear, currentMonth, currentDay, 23, 59, 59, 999); // Last millisecond of the last day of the current day
+  const dayStart = new Date(currentYear, currentMonth, currentDay, 0, 0, 0, 0);   // First millisecond of the current day
+  const dayEnd = new Date(currentYear, currentMonth, currentDay, 23, 59, 59, 999); // Last millisecond of the current day
 
   // Filter the full list of transactions to include only those within the current day.
   const filteredTransactions = transactions.filter(t => {
     const transactionDate = t.date.toDate(); // Convert Firestore Timestamp to JavaScript Date object
-    return transactionDate >= dayStart && transactionDate <= dayEnd; // Check if transaction date is within the current day
+    return transactionDate >= dayStart && transactionDate <= dayEnd; // Check if transaction date is within the current day's range
   });
 
   /**
@@ -59,9 +69,37 @@ const TransactionsSection = ({ showConfirm, showMessage }) => {
   return (
     // Section container for the daily transactions list.
     <section>
-      {/* Heading for the daily transactions section. */}
+      {/* Daily Navigation and Display Bar */}
+      <div className="flex justify-between items-center mb-4">
+        {/* Button to navigate to the previous day */}
+        <button
+          onClick={() => changeDay(-1)} // Calls changeDay from context with -1 to go back one day
+          className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+          aria-label="Previous Day" // Accessibility label
+        >
+          {/* SVG icon for previous arrow */}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6 text-gray-600">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        {/* Display of the current full date for daily transactions */}
+        <h3 className="text-xl font-semibold text-gray-700">{fullDate}</h3>
+        {/* Button to navigate to the next day */}
+        <button
+          onClick={() => changeDay(1)} // Calls changeDay from context with 1 to go forward one day
+          className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+          aria-label="Next Day" // Accessibility label
+        >
+          {/* SVG icon for next arrow */}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6 text-gray-600">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Heading for the daily transactions list. */}
       <h3 className="text-lg font-semibold text-gray-700 mb-3">Daily Transactions</h3>
-      {/* Container for the list of transactions, with vertical spacing, max height, and scrollability. */}
+      {/* Container for the scrollable list of transactions. */}
       <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
         {/* Conditional rendering: If no transactions for the current day, display a message. */}
         {filteredTransactions.length === 0 ? (
@@ -71,25 +109,25 @@ const TransactionsSection = ({ showConfirm, showMessage }) => {
           filteredTransactions.map(t => (
             <div
               key={t.id} // Unique key for each transaction item
-              // Dynamic styling based on transaction type (income/expense).
+              // Dynamic styling based on transaction type (income/expense) for visual distinction.
               className={`p-3 mb-2 rounded-lg shadow flex justify-between items-center ${
                 t.type === 'income'
                   ? 'bg-green-100 border-l-4 border-green-500' // Green styling for income
-                  : 'bg-red-100 border-l-4 border-red-500' // Red styling for expense
+                  : 'bg-red-100 border-l-4 border-red-500'   // Red styling for expense
               }`}
             >
-              {/* Transaction details: category, date, and amount. */}
+              {/* Transaction details: category, formatted date, and amount. */}
               <div>
                 <p className="font-semibold text-lg">{t.category}</p>
                 <p className="text-sm text-gray-600">
-                  {/* Format date and amount for display. */}
                   {t.date.toDate().toLocaleDateString()} - QAR {t.amount.toFixed(2)}
                 </p>
               </div>
               {/* Delete button for the transaction. */}
               <button
-                onClick={() => handleDelete(t.id)} // Calls handleDelete with the transaction ID
+                onClick={() => handleDelete(t.id)} // Calls handleDelete with the transaction ID when clicked
                 className="delete-btn text-red-500 hover:text-red-700 font-semibold p-1 rounded-full"
+                aria-label={`Delete ${t.category} transaction`} // Accessibility label
               >
                 {/* SVG icon for the delete (X) button. */}
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
