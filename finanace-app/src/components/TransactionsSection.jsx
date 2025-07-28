@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTransactions } from '../context/TransactionContext'; // Custom hook to access transaction-related state and functions
+import { useTransactions } from '../components/TransactionContext'; // Custom hook to access transaction-related state and functions
 
 /**
  * TransactionsSection Component

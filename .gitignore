@@ -76,4 +76,6 @@ config
 #public folder containing html file
 public__00/
 
+#todo file
+task.md
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth'; // Custom hook for authentication state and functions
-import { useTransactions } from '../context/TransactionContext'; // Custom hook for transaction-related state and functions
+import { useTransactions } from '../components/TransactionContext'; // Custom hook for transaction-related state and functions
 import UserInfo from './UserInfo'; // Component to display user information
 import OverviewSection from './OverviewSection'; // Component for financial overview (income, expenses, balance)
 import TransactionsSection from './TransactionsSection'; // Component to list monthly transactions

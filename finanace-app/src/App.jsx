@@ -1,8 +1,8 @@
 import React from 'react';
-import AuthContainer from './context/AuthContainer';
-import AppContainer from './context/AppContainer';
-import { AuthProvider } from './context/AuthContext';
-import { TransactionProvider } from './context/TransactionContext';
+import AuthContainer from './components/AuthContainer';
+import AppContainer from './components/AppContainer';
+import { AuthProvider } from './components/AuthContext';
+import { TransactionProvider } from './components/TransactionContext';
 
 function App() {
   return (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTransactions } from '../context/TransactionContext';
+import { useTransactions } from '../components/TransactionContext';
 
 /**
  * AddTransactionModal Component
