@@ -4,37 +4,34 @@ import { useTransactions } from '../components/TransactionContext'; // Custom ho
 /**
  * OverviewSection Component
  *
- * This component displays a financial overview for the currently selected month, year, and now day.
- * It shows the total income, total expenses, and the net balance for that specific period.
- * It also provides navigation buttons to change the displayed month and now day.
+ * This component displays a financial overview for the currently selected month and year.
+ * It shows the total income, total expenses, and the net balance for that specific month.
+ * It also provides navigation buttons to change the displayed month.
  */
 const OverviewSection = () => {
   // Destructure necessary state and functions from the useTransactions hook.
   // transactions: An array of all financial transactions.
   // currentMonth: The index of the currently selected month (0-11).
   // currentYear: The currently selected year.
-  // currentDay: The currently selected day of the month (1-31).
   // changeMonth: A function to change the current month (e.g., -1 for previous, 1 for next).
-  // changeDay: A function to change the current day (e.g., -1 for previous, 1 for next).
-  const { transactions, currentMonth, currentYear, currentDay, changeMonth, changeDay } = useTransactions();
+  const { transactions, currentMonth, currentYear, changeMonth } = useTransactions();
 
-  // Format the current date (day, month, and year) for display (e.g., "July 26, 2025").
-  const fullDate = new Date(currentYear, currentMonth, currentDay).toLocaleString('default', {
-    day: 'numeric', // Day of the month
-    month: 'long', // Full month name
+  // Format the current month and year for display (e.g., "July 2025").
+  const monthYear = new Date(currentYear, currentMonth).toLocaleString('default', {
+    month: 'long',  // Full month name
     year: 'numeric' // Full year
   });
 
   // --- Transaction Filtering Logic ---
-  // Determine the start and end dates for the current day to filter transactions.
-  // The filter will now be for a specific day, from the beginning of that day to the end.
-  const dayStart = new Date(currentYear, currentMonth, currentDay, 0, 0, 0); // First millisecond of the current day
-  const dayEnd = new Date(currentYear, currentMonth, currentDay, 23, 59, 59, 999); // Last millisecond of the current day
+  // Determine the start and end dates for the current month to filter transactions.
+  // The filter will now be for the entire month.
+  const monthStart = new Date(currentYear, currentMonth, 1); // First day of the current month
+  const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999); // Last millisecond of the last day of the current month
 
-  // Filter the full list of transactions to include only those within the current day.
+  // Filter the full list of transactions to include only those within the current month.
   const filteredTransactions = transactions.filter(t => {
     const transactionDate = t.date.toDate(); // Convert Firestore Timestamp to JavaScript Date object
-    return transactionDate >= dayStart && transactionDate <= dayEnd; // Check if transaction date is within the current day
+    return transactionDate >= monthStart && transactionDate <= monthEnd; // Check if transaction date is within the current month
   });
 
   // --- Calculation of Totals ---
@@ -57,11 +54,11 @@ const OverviewSection = () => {
   return (
     // Section container for the financial overview.
     <section className="mb-6">
-      {/* Date navigation and display. */}
+      {/* Month navigation and display. */}
       <div className="flex justify-between items-center mb-4">
-        {/* Button to navigate to the previous day. */}
+        {/* Button to navigate to the previous month. */}
         <button
-          onClick={() => changeDay(-1)} // Calls changeDay with -1 to go back one day
+          onClick={() => changeMonth(-1)} // Calls changeMonth with -1 to go back one month
           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
         >
           {/* SVG icon for previous arrow. */}
@@ -69,11 +66,11 @@ const OverviewSection = () => {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
         </button>
-        {/* Display of the current full date. */}
-        <h2 className="text-xl font-semibold text-gray-700">{fullDate}</h2>
-        {/* Button to navigate to the next day. */}
+        {/* Display of the current month and year. */}
+        <h2 className="text-xl font-semibold text-gray-700">{monthYear}</h2>
+        {/* Button to navigate to the next month. */}
         <button
-          onClick={() => changeDay(1)} // Calls changeDay with 1 to go forward one day
+          onClick={() => changeMonth(1)} // Calls changeMonth with 1 to go forward one month
           className="p-2 rounded-full hover:bg-gray-200 transition-colors"
         >
           {/* SVG icon for next arrow. */}

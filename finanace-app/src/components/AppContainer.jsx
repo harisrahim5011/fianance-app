@@ -15,16 +15,19 @@ import LoadingIndicator from './LoadingIndicator'; // Component to display a loa
  * This component serves as the main layout and orchestrator for the Finance Tracker application's
  * authenticated view. It manages the visibility and state of various modals and integrates
  * sub-components to display financial data and user information.
+ * It is designed to render for any authenticated user, including anonymous ones,
+ * allowing anonymous users to upgrade their account via the UserInfo component.
  */
 const AppContainer = () => {
   // Destructure authentication state and functions from the useAuth hook.
   // currentUser: The currently authenticated user object (or null if not authenticated).
   // signOutUser: Function to sign out the current user.
-  const { currentUser, signOutUser } = useAuth();
+  // signInWithGoogle: Function to initiate Google Sign-In, used for upgrading anonymous accounts.
+  const { currentUser, signOutUser, signInWithGoogle } = useAuth(); // SIGNIFICANT CHANGE: Added signInWithGoogle
 
   // Destructure loading state from the useTransactions hook.
   // loading: A boolean indicating if transaction data is currently being loaded.
-  const { loading } = useTransactions();
+  const { loading: transactionsLoading } = useTransactions(); // Renamed to avoid potential conflict with auth loading state
 
   // --- State Management for Modals ---
   // showAddModal: Controls the visibility of the AddTransactionModal.
@@ -40,11 +43,11 @@ const AppContainer = () => {
   // confirmMessage: Stores the message to display in the ConfirmModal.
   const [confirmMessage, setConfirmMessage] = React.useState('');
 
-  // --- Conditional Rendering for Authentication and Loading States ---
-  // If no user is authenticated, render nothing (the authentication screen will be handled elsewhere).
-  if (!currentUser) return null;
+  // --- Conditional Rendering for Loading States ---
   // If transaction data is loading, display a loading indicator.
-  if (loading) return <LoadingIndicator />;
+  // NOTE: The check for `!currentUser` is removed here, as `App` component now ensures a user is logged in
+  // (anonymous or otherwise) before rendering AppContainer.
+  if (transactionsLoading) return <LoadingIndicator />;
 
   /**
    * showMessage Function
@@ -62,12 +65,12 @@ const AppContainer = () => {
    * showConfirm Function
    *
    * A helper function to set the confirmation modal's content, action, and open it.
-   * @param {string} message - The confirmation message to display.
+   * @param {string} msg - The confirmation message to display.
    * @param {function} action - The callback function to execute if the user confirms.
    */
-  const showConfirm = (message, action) => {
-    setConfirmMessage(message); // Set the confirmation message
-    setConfirmAction(() => action); // Store the action callback
+  const showConfirm = (msg, action) => { // Renamed 'message' to 'msg' for clarity with state variable
+    setConfirmMessage(msg); // Set the confirmation message
+    setConfirmAction(() => action); // Store the action callback (using a function to prevent immediate execution)
     setShowConfirmModal(true); // Open the confirmation modal
   };
 
@@ -77,8 +80,15 @@ const AppContainer = () => {
     <div className="w-full max-w-md">
       {/* Header section displaying user information and sign-out button. */}
       <header className="mb-6 text-center bg-white p-4 rounded-xl shadow-lg">
-        {/* UserInfo component: displays current user details and handles sign-out. */}
-        <UserInfo user={currentUser} onSignOut={signOutUser} />
+        {/* UserInfo component: displays current user details and handles sign-out and Google sign-in. */}
+        {/* SIGNIFICANT CHANGE: Passed signInWithGoogle to UserInfo */}
+        {currentUser && (
+          <UserInfo
+            user={currentUser}
+            onSignOut={signOutUser}
+            onSignInGoogle={signInWithGoogle} // This prop allows UserInfo to show Google Sign-In for anonymous users
+          />
+        )}
       </header>
 
       {/* Main content area, styled with a white background, rounded corners, and shadow. */}
@@ -87,7 +97,7 @@ const AppContainer = () => {
         <OverviewSection />
         {/* Button to open the Add New Transaction modal. */}
         <div className="mb-6">
-          <button 
+          <button
             onClick={() => setShowAddModal(true)} // Set state to open the AddTransactionModal
             className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-105"
           >
@@ -96,21 +106,21 @@ const AppContainer = () => {
         </div>
         {/* TransactionsSection component: displays the list of transactions. */}
         {/* Passes showConfirm and showMessage functions for interaction within the section. */}
-        <TransactionsSection 
+        <TransactionsSection
           showConfirm={showConfirm}
           showMessage={showMessage}
         />
       </div>
 
       {/* AddTransactionModal: conditionally rendered based on showAddModal state. */}
-      <AddTransactionModal 
+      <AddTransactionModal
         isOpen={showAddModal} // Controls modal visibility
         onClose={() => setShowAddModal(false)} // Callback to close the modal
         showMessage={showMessage} // Passes the showMessage helper function
       />
 
       {/* MessageModal: conditionally rendered based on showMessageModal state. */}
-      <MessageModal 
+      <MessageModal
         isOpen={showMessageModal} // Controls modal visibility
         message={message.text} // Message text to display
         isError={message.isError} // Error status of the message
@@ -118,10 +128,15 @@ const AppContainer = () => {
       />
 
       {/* ConfirmModal: conditionally rendered based on showConfirmModal state. */}
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={showConfirmModal} // Controls modal visibility
         message={confirmMessage} // Confirmation message to display
-        onConfirm={confirmAction} // Callback to execute on confirmation
+        onConfirm={() => {
+          if (confirmAction) {
+            confirmAction(); // Execute the stored action on confirmation
+          }
+          setShowConfirmModal(false); // Close the modal
+        }}
         onCancel={() => setShowConfirmModal(false)} // Callback to cancel and close the modal
       />
     </div>
