@@ -57,9 +57,9 @@ export function TransactionProvider({ children }) {
   const { currentUser } = useAuth();
 
   // Predefined categories for income transactions.
-  const incomeCategories = ["Salary", "Business", "Freelance", "Gifts", "Other"];
+  const incomeCategories = ["Salary", "Business", "Freelance", "Gifts", "Adjusted", "Other"];
   // Predefined categories for expense transactions.
-  const expenseCategories = ["Food", "Transport", "Rent", "Utilities", "Entertainment", "Health", "Shopping", "Education", "Other"];
+  const expenseCategories = ["Food", "Transport", "Rent", "Utilities", "Entertainment", "Health", "Shopping", "Education", "Adjusted", "Other"];
 
   /**
    * useEffect Hook for Loading Transactions
