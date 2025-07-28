@@ -5,7 +5,7 @@ import React from 'react';
  *
  * This component displays the authenticated user's profile information,
  * including their display name, profile picture, and user ID.
- * It also provides a button to sign out the user.
+ * It also provides a button to sign out the user for non-anonymous accounts.
  * For anonymous users, it will additionally show a Google Sign-In button
  * to allow them to upgrade their account.
  *
@@ -15,7 +15,7 @@ import React from 'react';
  * @param {function} props.onSignOut - A callback function to be executed when the sign-out button is clicked.
  * @param {function} props.onSignInGoogle - A callback function to be executed when the Google Sign-In button is clicked (for anonymous users).
  */
-const UserInfo = ({ user, onSignOut, onSignInGoogle }) => { // Added onSignInGoogle prop
+const UserInfo = ({ user, onSignOut, onSignInGoogle }) => {
   // Safely get the first letter of the user's display name for a placeholder image.
   // If displayName is null or undefined, default to 'U'.
   const firstLetter = user.displayName?.charAt(0) || 'U';
@@ -66,13 +66,15 @@ const UserInfo = ({ user, onSignOut, onSignInGoogle }) => { // Added onSignInGoo
           )}
         </div>
       </div>
-      {/* Right section: Sign Out button. */}
-      <button
-        onClick={onSignOut} // Triggers the onSignOut callback when clicked.
-        className="text-sm text-blue-600 hover:text-blue-800 font-semibold" // Tailwind classes for styling
-      >
-        Sign Out
-      </button>
+      {/* Right section: Sign Out button, conditionally rendered only if the user is NOT anonymous. */}
+      {!user.isAnonymous && ( // SIGNIFICANT CHANGE: Conditional rendering added here
+        <button
+          onClick={onSignOut} // Triggers the onSignOut callback when clicked.
+          className="text-sm text-blue-600 hover:text-blue-800 font-semibold" // Tailwind classes for styling
+        >
+          Sign Out
+        </button>
+      )}
     </div>
   );
 };
